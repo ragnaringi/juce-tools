@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func fileExists(path string) (bool, error) {
@@ -26,6 +27,10 @@ func listFiles(directory string) []fs.FileInfo {
 	}
 	defer files.Close()
 	return fileInfo
+}
+
+func fileNameWithoutExtension(fileName string) string {
+	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
 }
 
 func findFilesWithExtension(directory, ext string) (ret []fs.FileInfo) {

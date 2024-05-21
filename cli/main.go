@@ -3,61 +3,42 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"os/exec"
-
-	"github.com/nexidian/gocliselect"
 )
-
-func findJucerProjectFile(directory string) fs.FileInfo {
-	jucerProjects := findFilesWithExtension(directory, ".jucer")
-
-	if len(jucerProjects) == 0 {
-		return nil
-	} else if len(jucerProjects) > 1 {
-		menu := gocliselect.NewMenu("Multiple JUCE projects in directory. Choose one")
-
-		for _, file := range jucerProjects {
-			menu.AddItem(file.Name(), file.Name())
-		}
-
-		choice := menu.Display()
-
-		for _, file := range jucerProjects {
-			if file.Name() == choice {
-				return file
-			}
-		}
-	}
-
-	return jucerProjects[0]
-}
 
 // ===============================================================================================
 func main() {
-	pwd, err := os.Getwd()
+	flag.Parse()
+
+	if flag.NArg() == 0 {
+		fmt.Println("No arguments found")
+		os.Exit(1)
+	}
+
+	workingDirectory, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	flag.Parse()
+	projectFile := findJucerProjectFile(workingDirectory)
+	if projectFile == nil {
+		fmt.Println("No JUCE project found in directory", workingDirectory)
+		os.Exit(1)
+	}
 
-	if flag.NArg() == 0 {
-		fmt.Println("No arguments found")
-	} else if flag.Arg(0) == "up" {
-		fmt.Println("Starting JUCE")
+	projectName := fileNameWithoutExtension(projectFile.Name())
 
-		projectFile := findJucerProjectFile(pwd)
+	juceDirectory := findJuceDirectory(workingDirectory)
+	if juceDirectory == "" {
+		fmt.Println("No JUCE installation found")
+		os.Exit(1)
+	}
 
-		if projectFile == nil {
-			fmt.Println("No JUCE project found in directory", pwd)
-			return
-		}
-
-		if projucerBinary, _ := findProjucerExecutable(pwd); projucerBinary != "" {
+	if flag.Arg(0) == "up" {
+		if projucerBinary, _ := findProjucerExecutable(workingDirectory); projucerBinary != "" {
 			fmt.Println("Opening", projectFile.Name())
 
 			cmd := exec.Command(projucerBinary, projectFile.Name())
@@ -65,16 +46,33 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-	} else if flag.Arg(0) == "export" {
-		projectFile := findJucerProjectFile(pwd)
-
-		if projectFile == nil {
-			fmt.Println("No JUCE project found in directory", pwd)
-			return
+	} else if flag.Arg(0) == "clean" {
+		if flag.Arg(1) == "--all" {
+			cleanProjucerBuildArtefacts(workingDirectory)
 		}
-
-		fmt.Println("Exporting project", projectFile.Name())
-
-		exportProject(pwd, projectFile)
+		cleanProject(workingDirectory)
+	} else if flag.Arg(0) == "export" {
+		fmt.Println("Exporting", projectName)
+		if _, err := exportProject(workingDirectory, projectFile); err != nil {
+			log.Fatal(err)
+		}
+	} else if flag.Arg(0) == "code" {
+		fmt.Println("Exporting", projectName)
+		if _, err := exportProject(workingDirectory, projectFile); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Opening", projectName+".xcodeproj")
+		if _, err := openProject(workingDirectory, projectFile); err != nil {
+			log.Fatal(err)
+		}
+	} else if flag.Arg(0) == "build" {
+		fmt.Println("Exporting", projectName)
+		if _, err := exportProject(workingDirectory, projectFile); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Building", projectName+".xcodeproj")
+		if _, err := buildProject(workingDirectory, projectFile); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
