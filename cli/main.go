@@ -3,10 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 )
+
+func run(cmd *exec.Cmd) (bool, error) {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(output))
+		return false, err
+	}
+	return true, nil
+}
 
 // ===============================================================================================
 func main() {
@@ -19,60 +27,41 @@ func main() {
 
 	workingDirectory, err := os.Getwd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(err)
 	}
 
-	projectFile := findJucerProjectFile(workingDirectory)
-	if projectFile == nil {
-		fmt.Println("No JUCE project found in directory", workingDirectory)
-		os.Exit(1)
-	}
-
-	projectName := fileNameWithoutExtension(projectFile.Name())
-
-	juceDirectory := findJuceDirectory(workingDirectory)
-	if juceDirectory == "" {
-		fmt.Println("No JUCE installation found")
-		os.Exit(1)
-	}
+	project := NewProject(workingDirectory)
+	juce := NewJUCE(workingDirectory)
 
 	if flag.Arg(0) == "up" {
-		if projucerBinary, _ := findProjucerExecutable(workingDirectory); projucerBinary != "" {
-			fmt.Println("Opening", projectFile.Name())
-
-			cmd := exec.Command(projucerBinary, projectFile.Name())
-			if err := cmd.Start(); err != nil {
-				log.Fatal(err)
-			}
-		}
+		juce.projucer.open(project.filePath)
 	} else if flag.Arg(0) == "clean" {
 		if flag.Arg(1) == "--all" {
-			cleanProjucerBuildArtefacts(workingDirectory)
+			juce.projucer.cleanBuildArtefacts()
 		}
-		cleanProject(workingDirectory)
+		project.clean()
 	} else if flag.Arg(0) == "export" {
-		fmt.Println("Exporting", projectName)
-		if _, err := exportProject(workingDirectory, projectFile); err != nil {
-			log.Fatal(err)
+		fmt.Println("Exporting", project.name)
+		if _, err := juce.projucer.export(project.filePath); err != nil {
+			panic(err)
 		}
 	} else if flag.Arg(0) == "code" {
-		fmt.Println("Exporting", projectName)
-		if _, err := exportProject(workingDirectory, projectFile); err != nil {
-			log.Fatal(err)
+		fmt.Println("Exporting", project.name)
+		if _, err := juce.projucer.export(project.filePath); err != nil {
+			panic(err)
 		}
-		fmt.Println("Opening", projectName+".xcodeproj")
-		if _, err := openProject(workingDirectory, projectFile); err != nil {
-			log.Fatal(err)
+		fmt.Println("Opening", project.name+".xcodeproj")
+		if _, err := project.open(); err != nil {
+			panic(err)
 		}
 	} else if flag.Arg(0) == "build" {
-		fmt.Println("Exporting", projectName)
-		if _, err := exportProject(workingDirectory, projectFile); err != nil {
-			log.Fatal(err)
+		fmt.Println("Exporting", project.name)
+		if _, err := juce.projucer.export(project.filePath); err != nil {
+			panic(err)
 		}
-		fmt.Println("Building", projectName+".xcodeproj")
-		if _, err := buildProject(workingDirectory, projectFile); err != nil {
-			log.Fatal(err)
+		fmt.Println("Building", project.name+".xcodeproj")
+		if _, err := project.build(); err != nil {
+			panic(err)
 		}
 	}
 }

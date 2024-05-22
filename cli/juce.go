@@ -1,16 +1,28 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"io/fs"
 	"log"
-	"os"
-	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 )
+
+type JUCE struct {
+	path     string
+	projucer *Projucer
+}
+
+func NewJUCE(rootDirectory string) *JUCE {
+	jucePath := findJuceDirectory(rootDirectory)
+	if exists, _ := fileExists(jucePath); !exists {
+		panic("No JUCE installation found in directory")
+	}
+	projucer := NewProjucer(jucePath)
+	return &JUCE{
+		path:     jucePath,
+		projucer: projucer,
+	}
+}
 
 func findJuceDirectory(directory string) (ret string) {
 	err := filepath.Walk(directory,
@@ -33,46 +45,4 @@ func findJuceDirectory(directory string) (ret string) {
 	}
 
 	return
-}
-
-func findProjucerExecutable(directory string) (string, error) {
-	if path := findJuceDirectory(directory); path != "" {
-		projucerBinary := filepath.Join(path, "extras/Projucer/Builds/MacOSX/build/Release/Projucer.app/Contents/MacOS/Projucer")
-
-		if found, _ := fileExists(projucerBinary); found {
-			return projucerBinary, nil
-		}
-
-		fmt.Println("Projucer binary not found. Compiling")
-		if success, _ := compileProjucer(directory); success {
-			return projucerBinary, nil
-		}
-	}
-	return "", errors.New("unable to find Projucer binary")
-}
-
-func compileProjucer(directory string) (bool, error) {
-	if path := findJuceDirectory(directory); path != "" {
-		projucerProject := filepath.Join(path, "extras/Projucer/Builds/MacOSX/Projucer.xcodeproj")
-		if found, _ := fileExists(projucerProject); found {
-			cmd := exec.Command("xcodebuild", "-project", projucerProject, "-scheme", "Projucer - App", "-configuration", "Release", "-jobs", "8")
-			return run(cmd)
-		}
-	}
-	return false, errors.New("unable to find Projucer Xcode project")
-}
-
-func cleanProjucerBuildArtefacts(directory string) (bool, error) {
-	if jucePath := findJuceDirectory(directory); jucePath != "" {
-		buildsDir := filepath.Join(jucePath, "extras", "Projucer", "Builds")
-		dir, err := os.ReadDir(buildsDir)
-		if err != nil {
-			return false, err
-		}
-		for _, d := range dir {
-			os.RemoveAll(path.Join(buildsDir, d.Name(), "build"))
-		}
-		return true, nil
-	}
-	return false, errors.New("unable to find JUCE directory")
 }
