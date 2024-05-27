@@ -2,80 +2,55 @@ package main
 
 import (
 	"errors"
-	"io/fs"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-
-	"github.com/nexidian/gocliselect"
 )
 
 type JUCEProject struct {
-	directory string
-	filePath  string
-	name      string
+	directory     string // project root directory
+	buildsPath    string // Builds directory
+	jucerFilePath string // Projucer project file
+	buildFilePath string // IDE project file
+	name          string // project name
 }
 
 func NewProject(directory string) *JUCEProject {
-	projectFile := findProjectFile(directory)
+	projectFile := findJucerProjectFile(directory)
 	if projectFile == nil {
 		panic("No JUCE projects found in directory")
 	}
+	name := fileNameWithoutExtension(projectFile.Name())
+	buildsPath := path.Join(directory, "Builds")
+	jucerFilePath := path.Join(directory, projectFile.Name())
+	buildFilePath := filepath.Join(buildsPath, platformIdentifier, name+ideProjectExtension)
 	return &JUCEProject{
-		directory: directory,
-		filePath:  path.Join(directory, projectFile.Name()),
-		name:      fileNameWithoutExtension(projectFile.Name()),
+		directory,
+		buildsPath,
+		jucerFilePath,
+		buildFilePath,
+		name,
 	}
 }
 
 func (p *JUCEProject) open() (bool, error) {
-	xcodeProject := filepath.Join(p.directory, "Builds", "MacOSX", p.name+".xcodeproj")
-	if found, _ := fileExists(xcodeProject); found {
-		cmd := exec.Command("open", xcodeProject)
-		return run(cmd)
+	if found, _ := fileExists(p.buildFilePath); found {
+		return open(p.buildFilePath)
 	}
-	return false, errors.New("unable to find Xcode project")
+	return false, errors.New("unable to find build project file")
 }
 
 func (p *JUCEProject) build() (bool, error) {
-	xcodeProject := filepath.Join(p.directory, "Builds", "MacOSX", p.name+".xcodeproj")
-	if found, _ := fileExists(xcodeProject); found {
-		cmd := exec.Command("xcodebuild", "-project", xcodeProject, "-scheme", p.name+" - All", "-configuration", "Release", "-jobs", "8")
-		return run(cmd)
+	if found, _ := fileExists(p.buildFilePath); found {
+		return build(p.buildFilePath)
 	}
-	return false, errors.New("unable to find Xcode project")
+	return false, errors.New("unable to find build project file")
 }
 
 func (p *JUCEProject) clean() (bool, error) {
-	buildsDir := filepath.Join(p.directory, "Builds")
-	dir, _ := os.ReadDir(buildsDir)
+	dir, _ := os.ReadDir(p.buildsPath)
 	for _, d := range dir {
-		os.RemoveAll(path.Join(buildsDir, d.Name()))
+		os.RemoveAll(path.Join(p.buildsPath, d.Name()))
 	}
 	return true, nil
-}
-
-func findProjectFile(directory string) fs.FileInfo {
-	projectFiles := findFilesWithExtension(directory, ".jucer")
-
-	if len(projectFiles) == 0 {
-		return nil
-	} else if len(projectFiles) > 1 {
-		menu := gocliselect.NewMenu("Multiple JUCE projects in directory. Choose one")
-
-		for _, file := range projectFiles {
-			menu.AddItem(file.Name(), file.Name())
-		}
-
-		choice := menu.Display()
-
-		for _, file := range projectFiles {
-			if file.Name() == choice {
-				return file
-			}
-		}
-	}
-
-	return projectFiles[0]
 }

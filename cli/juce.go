@@ -30,13 +30,11 @@ func findJuceDirectory(directory string) (ret string) {
 			if err != nil {
 				return err
 			}
-
-			if strings.HasSuffix(path, "/JUCE") {
+			if info.IsDir() && strings.HasSuffix(path, "JUCE") {
 				if found, _ := fileExists(filepath.Join(path, "extras")); found {
 					ret = path
 				}
 			}
-
 			return nil
 		})
 

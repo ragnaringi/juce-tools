@@ -1,4 +1,4 @@
-module juce
+module juce-tools
 
 go 1.21.4
 
