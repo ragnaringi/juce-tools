@@ -42,7 +42,7 @@ func (p *JUCEProject) open() (bool, error) {
 
 func (p *JUCEProject) build() (bool, error) {
 	if found, _ := fileExists(p.buildFilePath); found {
-		return build(p.buildFilePath)
+		return build(p.buildFilePath, p.name+" - All")
 	}
 	return false, errors.New("unable to find build project file")
 }

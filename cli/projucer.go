@@ -31,7 +31,7 @@ func NewProjucer(jucePath string) *Projucer {
 
 func (p *Projucer) build() (bool, error) {
 	if found, _ := fileExists(p.projectPath); found {
-		return build(p.projectPath)
+		return build(p.projectPath, "Projucer - App")
 	}
 	return false, errors.New("unable to find Projucer IDE project")
 }

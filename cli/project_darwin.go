@@ -7,7 +7,7 @@ import (
 )
 
 const platformIdentifier string = "MacOSX"
-const ideProjectExtension string = ".xcodeProject"
+const ideProjectExtension string = ".xcodeproj"
 const buildArtefactsPath string = "build"
 
 func findJucerProjectFile(directory string) fs.FileInfo {

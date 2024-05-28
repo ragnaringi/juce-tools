@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-func build(projectFile string) (bool, error) {
+func build(projectFile string, targetName string) (bool, error) {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
@@ -13,7 +13,7 @@ func build(projectFile string) (bool, error) {
 		cmd = exec.Command(buildTool, projectFile, "/property:Configuration=Release")
 	case "darwin":
 		const buildTool = "xcodebuild"
-		cmd = exec.Command(buildTool, "-project", projectFile, "-scheme", "Projucer - App", "-configuration", "Release", "-jobs", "8")
+		cmd = exec.Command(buildTool, "-project", projectFile, "-scheme", targetName, "-configuration", "Release", "-jobs", "8")
 	default:
 		panic("Platform not supported")
 	}
