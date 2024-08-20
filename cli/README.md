@@ -12,6 +12,6 @@ A command line utility to simplify working with JUCE projects. Install then run 
 Clone the repo and build the go module directly with `go build -o juce-tools` or install the pre-built binaries using the provied shell scripts.
 
 ### Mac
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ragnaringi/juce-tools/develop/cli/install.sh)"`  
+`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ragnaringi/juce-tools/main/cli/install.sh)"`  
 ### Win
-`Invoke-WebRequest -Uri https://raw.githubusercontent.com/ragnaringi/juce-tools/develop/cli/install.bat -OutFile .\temp.bat; .\temp.bat; rm .\temp.bat` Requires Administrator shell
+`Invoke-WebRequest -Uri https://raw.githubusercontent.com/ragnaringi/juce-tools/main/cli/install.bat -OutFile .\temp.bat; .\temp.bat; rm .\temp.bat` Requires Administrator shell
