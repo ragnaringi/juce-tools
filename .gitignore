@@ -1,3 +1,4 @@
 
 cli/go.sum
 *.exe
+.DS_Store
