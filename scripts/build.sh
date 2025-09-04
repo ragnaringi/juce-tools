@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# Move to cli/ where go.mod exists
+TAG="${1:-dev}"  # defaults to "dev" if no argument supplied
+
 cd "$(dirname "$0")/../cli"
 
 echo "Fetching Go module dependencies..."
-go mod tidy    # ensures go.mod and go.sum are correct
-go mod download  # downloads all modules
+go mod tidy
+go mod download
 
-echo "Building juce-tools..."
-go build -o ../juce-tools
+echo "Building juce-tools for macOS..."
 
-echo "Built ./juce-tools"
+GOOS=darwin GOARCH=amd64 go build -o ../juce-tools_"${TAG}"_darwin_amd64 ./...
+GOOS=darwin GOARCH=arm64 go build -o ../juce-tools_"${TAG}"_darwin_arm64 ./...
+lipo -create ../juce-tools_"${TAG}"_darwin_amd64 ../juce-tools_"${TAG}"_darwin_arm64 -output ../juce-tools_"${TAG}"_darwin_universal
+
+echo "Built juce-tools_${TAG}_darwin_universal"
