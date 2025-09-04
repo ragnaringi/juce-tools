@@ -13,6 +13,7 @@ type JUCEProject struct {
 	jucerFilePath string // Projucer project file
 	buildFilePath string // IDE project file
 	name          string // project name
+	schemeName    string // the project scheme name
 }
 
 func NewProject(directory string) *JUCEProject {
@@ -30,6 +31,7 @@ func NewProject(directory string) *JUCEProject {
 		jucerFilePath,
 		buildFilePath,
 		name,
+		"All",
 	}
 }
 
@@ -42,7 +44,7 @@ func (p *JUCEProject) Open() (bool, error) {
 
 func (p *JUCEProject) Build() (bool, error) {
 	if found, _ := fileExists(p.buildFilePath); found {
-		return build(p.buildFilePath, p.name+" - All")
+		return build(p.buildFilePath, p.name+" - "+p.schemeName)
 	}
 	return false, errors.New("unable to find build project file")
 }

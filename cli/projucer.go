@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -29,6 +28,7 @@ func NewProjucer(projectFile string) *Projucer {
 		jucerFilePath: projectFile,
 		buildFilePath: projectFile,
 		name:          "Projucer",
+		schemeName:    "App",
 	}
 
 	return &Projucer{
@@ -53,13 +53,8 @@ func (p *Projucer) Build() (bool, error) {
 
 	warn("Projucer binary not found or outdated → rebuilding...")
 
-	if found, _ := fileExists(p.project.buildFilePath); found {
-		notice("Building Projucer from: %s", relativePath(p.rootDir, p.project.buildFilePath))
-		return build(p.project.buildFilePath, "Projucer - App")
-	}
-
-	fail("Projucer IDE project missing at %s", relativePath(p.project.directory, p.project.buildFilePath))
-	return false, errors.New("unable to find Projucer IDE project")
+	notice("Building Projucer from: %s", relativePath(p.rootDir, p.project.buildFilePath))
+	return p.project.Build()
 }
 
 // Open builds Projucer if necessary, then launches the binary with a project file.
