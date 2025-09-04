@@ -16,7 +16,11 @@ func NewJUCE(rootDirectory string) *JUCE {
 	if exists, _ := fileExists(jucePath); !exists {
 		panic("No JUCE installation found in directory")
 	}
-	projucer := NewProjucer(jucePath)
+
+	// Construct Projucer from its actual project file
+	projucerProjectFile := filepath.Join(jucePath, "extras", "Projucer", "Builds", platformIdentifier, "Projucer"+ideProjectExtension)
+	projucer := NewProjucer(projucerProjectFile)
+
 	return &JUCE{
 		path:     jucePath,
 		projucer: projucer,

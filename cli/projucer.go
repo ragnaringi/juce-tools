@@ -17,16 +17,14 @@ type Projucer struct {
 	rootDir    string       // current working directory
 }
 
-// NewProjucer creates a new Projucer instance for a given JUCE path.
-func NewProjucer(jucePath string) *Projucer {
-	projPath := filepath.Join(jucePath, "extras/Projucer")
-	buildsPath := filepath.Join(projPath, "Builds", platformIdentifier)
-	projectFile := filepath.Join(buildsPath, "Projucer"+ideProjectExtension)
-	binary := initBinaryPath(buildsPath)
+// NewProjucer creates a new Projucer instance for a given Projucer project path.
+func NewProjucer(projectFile string) *Projucer {
+	buildsPath := filepath.Dir(projectFile)
+	binaryPath := initBinaryPath(buildsPath)
 	rootDir, _ := os.Getwd()
 
 	baseProject := &JUCEProject{
-		directory:     projPath,
+		directory:     filepath.Dir(filepath.Dir(buildsPath)),
 		buildsPath:    buildsPath,
 		jucerFilePath: projectFile,
 		buildFilePath: projectFile,
@@ -35,7 +33,7 @@ func NewProjucer(jucePath string) *Projucer {
 
 	return &Projucer{
 		project:    baseProject,
-		binaryPath: binary,
+		binaryPath: binaryPath,
 		rootDir:    rootDir,
 	}
 }
