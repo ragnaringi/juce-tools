@@ -35,7 +35,7 @@ func main() {
 
 	if flag.Arg(0) == "up" {
 		fmt.Println("Opening", project.name)
-		juce.projucer.open(project.jucerFilePath)
+		juce.projucer.Open(project.jucerFilePath)
 	} else if flag.Arg(0) == "clean" {
 		if flag.Arg(1) == "--all" {
 			juce.projucer.Clean()
