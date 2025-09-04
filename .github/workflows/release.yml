@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*" # Run on all tags, e.g. 0.2.0, 1.0.0, etc.
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      # 3. Build binaries per platform
+      - name: Build binaries
+        shell: bash
+        working-directory: cli
+        run: |
+          echo "Fetching Go dependencies..."
+          go mod tidy
+          go mod download
+
+          VERSION=${GITHUB_REF_NAME}
+
+          echo "Building for ${{ matrix.os }}..."
+
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "Building macOS Universal..."
+            GOOS=darwin GOARCH=amd64 go build -o ../juce-tools_${VERSION}_darwin_amd64 .
+            GOOS=darwin GOARCH=arm64 go build -o ../juce-tools_${VERSION}_darwin_arm64 .
+            lipo -create -output ../juce-tools_${VERSION}_darwin_universal \
+              ../juce-tools_${VERSION}_darwin_amd64 \
+              ../juce-tools_${VERSION}_darwin_arm64
+            rm ../juce-tools_${VERSION}_darwin_amd64 ../juce-tools_${VERSION}_darwin_arm64
+
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            echo "Building Windows AMD64..."
+            GOOS=windows GOARCH=amd64 go build -o ../juce-tools_${VERSION}_windows_amd64.exe .
+          fi
+
+      # 4. Upload built binaries as workflow artifacts
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: juce-tools-${{ matrix.os }}
+          path: juce-tools_*_${{ matrix.os == 'windows-latest' && 'windows_amd64.exe' || '*' }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository again
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Download all built artifacts
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist
+
+      # 3. Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "juce-tools ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          files: ./dist/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
