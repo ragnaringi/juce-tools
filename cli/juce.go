@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -37,7 +36,7 @@ func findJuceDirectory(startDir string) string {
 	maxDepth := 5
 	found := scanDownwards(startDir, 0, maxDepth)
 	if found != "" {
-		fmt.Println("Found JUCE by scanning downward:", found)
+		success("Found JUCE by scanning downward: %s", relativePath(startDir, found))
 		return found
 	}
 
@@ -45,7 +44,7 @@ func findJuceDirectory(startDir string) string {
 	dir := startDir
 	for {
 		if isJuceDir(dir) {
-			fmt.Println("Found JUCE by walking upwards:", dir)
+			success("Found JUCE by walking upwards: %s", relativePath(startDir, dir))
 			return dir
 		}
 		parent := filepath.Dir(dir)
@@ -58,13 +57,13 @@ func findJuceDirectory(startDir string) string {
 	// Environment variable fallback
 	if envPath := os.Getenv("JUCE_PATH"); envPath != "" {
 		if isJuceDir(envPath) {
-			fmt.Println("Found JUCE via JUCE_PATH:", envPath)
+			success("Found JUCE via JUCE_PATH: %s", envPath)
 			return envPath
 		}
-		fmt.Println("⚠️  JUCE_PATH is set but not valid:", envPath)
+		warn("JUCE_PATH is set but not valid: %s", envPath)
 	}
 
-	panic("❌ No JUCE installation found.")
+	panic("No JUCE installation found.")
 }
 
 // scanDownwards recursively searches subdirectories up to maxDepth
