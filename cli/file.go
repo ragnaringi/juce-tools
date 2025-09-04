@@ -8,6 +8,22 @@ import (
 	"strings"
 )
 
+// relativePath converts an absolute path into a relative path
+// based on the current working directory. If it fails, it falls
+// back to returning the absolute path instead.
+func relativePath(baseDir, targetPath string) string {
+	rel, err := filepath.Rel(baseDir, targetPath)
+	if err != nil {
+		return targetPath // fallback to absolute path
+	}
+
+	// Normalize to avoid weird "./" prefixes
+	if rel == "." {
+		return filepath.Base(targetPath)
+	}
+	return rel
+}
+
 func fileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
