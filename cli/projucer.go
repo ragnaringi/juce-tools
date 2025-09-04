@@ -34,6 +34,62 @@ func NewProjucer(jucePath string) *Projucer {
 	}
 }
 
+// build builds Projucer if needed.
+func (p *Projucer) Build() (bool, error) {
+	needs, err := p.needsBuild()
+	if err != nil {
+		fail("Could not check Projucer: %v", err)
+		return false, err
+	}
+
+	if !needs {
+		success("Projucer is up to date")
+		return true, nil
+	}
+
+	warn("Projucer binary not found or outdated, rebuilding...")
+
+	if found, _ := fileExists(p.projectPath); found {
+		notice("Building Projucer from: %s", relativePath(p.rootDir, p.projectPath))
+		return build(p.projectPath, "Projucer - App")
+	}
+
+	fail("Projucer IDE project missing at %s", relativePath(p.path, p.projectPath))
+	return false, errors.New("unable to find Projucer IDE project")
+}
+
+// open launches the Projucer binary with a given project file.
+func (p *Projucer) open(projectFile string) (bool, error) {
+	ok, err := p.Build()
+	if !ok {
+		return false, fmt.Errorf("failed to build Projucer: %w", err)
+	}
+
+	cmd := exec.Command(p.binaryPath, projectFile)
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+	return true, nil
+}
+
+// export resaves a project file.
+func (p *Projucer) Export(projectFile string) (bool, error) {
+	if ok, err := p.Build(); !ok {
+		return false, fmt.Errorf("failed to build Projucer: %w", err)
+	}
+	notice("Exporting: %s", filepath.Base(projectFile))
+	cmd := exec.Command(p.binaryPath, "--resave", projectFile)
+	return run(cmd)
+}
+
+// cleanBuildArtefacts deletes Projucer build artefacts.
+func (p *Projucer) Clean() (bool, error) {
+	if err := os.RemoveAll(filepath.Join(p.buildsPath, buildArtefactsPath)); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // needsBuild checks if Projucer binary is missing or outdated.
 func (p *Projucer) needsBuild() (bool, error) {
 	found, err := fileExists(p.binaryPath)
@@ -65,62 +121,6 @@ func (p *Projucer) needsBuild() (bool, error) {
 	}
 
 	return newestSource != "", nil
-}
-
-// build builds Projucer if needed.
-func (p *Projucer) build() (bool, error) {
-	needs, err := p.needsBuild()
-	if err != nil {
-		fail("Could not check Projucer: %v", err)
-		return false, err
-	}
-
-	if !needs {
-		success("Projucer is up to date")
-		return true, nil
-	}
-
-	warn("Projucer binary not found or outdated, rebuilding...")
-
-	if found, _ := fileExists(p.projectPath); found {
-		notice("Building Projucer from: %s", relativePath(p.rootDir, p.projectPath))
-		return build(p.projectPath, "Projucer - App")
-	}
-
-	fail("Projucer IDE project missing at %s", relativePath(p.path, p.projectPath))
-	return false, errors.New("unable to find Projucer IDE project")
-}
-
-// open launches the Projucer binary with a given project file.
-func (p *Projucer) open(projectFile string) (bool, error) {
-	ok, err := p.build()
-	if !ok {
-		return false, fmt.Errorf("failed to build Projucer: %w", err)
-	}
-
-	cmd := exec.Command(p.binaryPath, projectFile)
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	return true, nil
-}
-
-// export resaves a project file.
-func (p *Projucer) export(projectFile string) (bool, error) {
-	if ok, err := p.build(); !ok {
-		return false, fmt.Errorf("failed to build Projucer: %w", err)
-	}
-	notice("Exporting: %s", filepath.Base(projectFile))
-	cmd := exec.Command(p.binaryPath, "--resave", projectFile)
-	return run(cmd)
-}
-
-// cleanBuildArtefacts deletes Projucer build artefacts.
-func (p *Projucer) cleanBuildArtefacts() (bool, error) {
-	if err := os.RemoveAll(filepath.Join(p.buildsPath, buildArtefactsPath)); err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 // initBinaryPath returns the Projucer binary path for the platform.

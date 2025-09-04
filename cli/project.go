@@ -33,21 +33,21 @@ func NewProject(directory string) *JUCEProject {
 	}
 }
 
-func (p *JUCEProject) open() (bool, error) {
+func (p *JUCEProject) Open() (bool, error) {
 	if found, _ := fileExists(p.buildFilePath); found {
 		return open(p.buildFilePath)
 	}
 	return false, errors.New("unable to find build project file")
 }
 
-func (p *JUCEProject) build() (bool, error) {
+func (p *JUCEProject) Build() (bool, error) {
 	if found, _ := fileExists(p.buildFilePath); found {
 		return build(p.buildFilePath, p.name+" - All")
 	}
 	return false, errors.New("unable to find build project file")
 }
 
-func (p *JUCEProject) clean() (bool, error) {
+func (p *JUCEProject) Clean() (bool, error) {
 	dir, _ := os.ReadDir(p.buildsPath)
 	for _, d := range dir {
 		os.RemoveAll(path.Join(p.buildsPath, d.Name()))
