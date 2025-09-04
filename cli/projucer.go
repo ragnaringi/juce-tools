@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -59,24 +58,15 @@ func (p *Projucer) Build() (bool, error) {
 
 // Open builds Projucer if necessary, then launches the binary with a project file.
 func (p *Projucer) Open(projectFile string) (bool, error) {
-	ok, err := p.Build()
-	if !ok {
-		return false, fmt.Errorf("failed to build Projucer: %w", err)
-	}
-
 	cmd := exec.Command(p.binaryPath, projectFile)
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
+		return false, fmt.Errorf("failed to open project: %w", err)
 	}
 	return true, nil
 }
 
 // Export uses the Projucer binary to resave a given project file.
 func (p *Projucer) Export(projectFile string) (bool, error) {
-	ok, err := p.Build()
-	if !ok {
-		return false, fmt.Errorf("failed to build Projucer: %w", err)
-	}
 	notice("Exporting: %s", filepath.Base(projectFile))
 	cmd := exec.Command(p.binaryPath, "--resave", projectFile)
 	return run(cmd)
