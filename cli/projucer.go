@@ -68,9 +68,26 @@ func (p *Projucer) Open(projectFile string) (bool, error) {
 
 // Export uses the Projucer binary to resave a given project file.
 func (p *Projucer) Export(projectFile string) (bool, error) {
-	notice("Exporting: %s", filepath.Base(projectFile))
+	// Normalize path separators for Windows
+	projectFile = filepath.FromSlash(projectFile)
+
+	// Set up the command
 	cmd := exec.Command(p.binaryPath, "--resave", projectFile)
-	return run(cmd)
+
+	// Set working directory to the directory containing the .jucer file
+	cmd.Dir = filepath.Dir(projectFile)
+
+	// Optional: stream stdout/stderr directly to console for debugging
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Run the command
+	err := cmd.Run()
+	if err != nil {
+		return false, fmt.Errorf("Projucer failed: %w", err)
+	}
+
+	return true, nil
 }
 
 // Clean deletes only the Projucer build artefacts (same as old cleanBuildArtefacts)
