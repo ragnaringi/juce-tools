@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // Projucer wraps a JUCEProject and handles building the Projucer IDE binary.
@@ -80,7 +81,30 @@ func (p *Projucer) Clean() (bool, error) {
 	return true, nil
 }
 
-// needsBuild checks if the Projucer binary is missing or outdated.
+// shouldIgnoreFile returns true if the file is a nuisance file (not source).
+func shouldIgnoreFile(path string) bool {
+	name := filepath.Base(path)
+	ext := filepath.Ext(path)
+
+	// macOS artifacts
+	if name == ".DS_Store" || ext == ".nib" || ext == ".plist" {
+		return true
+	}
+
+	// Windows build artifacts (in case anything slips through)
+	if ext == ".obj" || ext == ".pdb" || ext == ".ilk" {
+		return true
+	}
+
+	// JUCE binary itself
+	if name == "Projucer.exe" || name == "Projucer" {
+		return true
+	}
+
+	return false
+}
+
+// needsBuild checks if the Projucer binary is missing or older than any source files.
 func (p *Projucer) needsBuild() (bool, error) {
 	found, err := fileExists(p.binaryPath)
 	if err != nil {
@@ -92,25 +116,49 @@ func (p *Projucer) needsBuild() (bool, error) {
 
 	binaryInfo, err := os.Stat(p.binaryPath)
 	if err != nil {
-		return true, nil // treat stat errors as needing rebuild
+		return true, nil
 	}
+
 	binaryModTime := binaryInfo.ModTime()
 
-	var newestSource string
-	err = filepath.Walk(p.project.directory, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
-			return nil
-		}
-		if info.ModTime().After(binaryModTime) {
-			newestSource = path
-		}
-		return nil
-	})
-	if err != nil {
-		return true, fmt.Errorf("walking Projucer sources: %w", err)
+	sourceDirs := []string{
+		filepath.Join(p.project.directory, "Source"),
+		filepath.Join(p.project.directory, "modules"),
 	}
 
-	return newestSource != "", nil
+	for _, dir := range sourceDirs {
+		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return nil
+			}
+
+			// Skip build folders entirely
+			if info.IsDir() && strings.HasPrefix(path, filepath.Join(p.project.directory, "Builds")) {
+				return filepath.SkipDir
+			}
+
+			if info.IsDir() {
+				return nil
+			}
+
+			if shouldIgnoreFile(path) {
+				return nil
+			}
+
+			if info.ModTime().After(binaryModTime) {
+				return fmt.Errorf("newer file found") // short-circuit
+			}
+			return nil
+		})
+		if err != nil && err.Error() == "newer file found" {
+			return true, nil
+		}
+		if err != nil {
+			return true, fmt.Errorf("walking source dir: %w", err)
+		}
+	}
+
+	return false, nil
 }
 
 // initBinaryPath returns the expected Projucer binary path per platform.
