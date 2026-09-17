@@ -77,13 +77,7 @@ func (p *Projucer) Export(projectFile string) (bool, error) {
 	// Set working directory to the directory containing the .jucer file
 	cmd.Dir = filepath.Dir(projectFile)
 
-	// Optional: stream stdout/stderr directly to console for debugging
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// Run the command
-	err := cmd.Run()
-	if err != nil {
+	if ok, err := run(cmd); !ok {
 		return false, fmt.Errorf("Projucer failed: %w", err)
 	}
 

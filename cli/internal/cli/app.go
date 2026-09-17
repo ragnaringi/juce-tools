@@ -5,9 +5,38 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
+func formatCommand(cmd *exec.Cmd) string {
+	var parts []string
+
+	if cmd.Dir != "" {
+		parts = append(parts, "cd", shellQuote(cmd.Dir), "&&")
+	}
+
+	for _, arg := range cmd.Args {
+		parts = append(parts, shellQuote(arg))
+	}
+
+	return strings.Join(parts, " ")
+}
+
+func shellQuote(value string) string {
+	if value == "" {
+		return `""`
+	}
+
+	if !strings.ContainsAny(value, " \t\n\"'\\$&;()[]{}<>|*?!") {
+		return value
+	}
+
+	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
+}
+
 func run(cmd *exec.Cmd) (bool, error) {
+	notice("$ %s", formatCommand(cmd))
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + string(output))
