@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"flag"
 	"fmt"
 	"path/filepath"
 )
@@ -91,7 +92,13 @@ func runExport(workingDirectory string) error {
 	return nil
 }
 
-func runCode(workingDirectory string) error {
+func runCode(workingDirectory string, args []string) error {
+	codeFlags := flag.NewFlagSet("code", flag.ContinueOnError)
+	exporter := codeFlags.String("exporter", "", "Projucer exporter to open")
+	if err := codeFlags.Parse(args); err != nil {
+		return err
+	}
+
 	ctx, err := loadJUCECommandContext(workingDirectory)
 	if err != nil {
 		return err
@@ -102,15 +109,26 @@ func runCode(workingDirectory string) error {
 		return err
 	}
 
-	success("Opening %s", ctx.project.name+ideProjectExtension)
-	if _, err := ctx.project.Open(); err != nil {
+	if *exporter != "" {
+		success("Opening %s exporter for %s", *exporter, ctx.project.name)
+	} else {
+		success("Opening %s", ctx.project.name+ideProjectExtension)
+	}
+
+	if _, err := ctx.project.Open(*exporter); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func runBuild(workingDirectory string) error {
+func runBuild(workingDirectory string, args []string) error {
+	codeFlags := flag.NewFlagSet("code", flag.ContinueOnError)
+	exporter := codeFlags.String("exporter", "", "Projucer exporter to use")
+	if err := codeFlags.Parse(args); err != nil {
+		return err
+	}
+
 	ctx, err := loadJUCECommandContext(workingDirectory)
 	if err != nil {
 		return err
@@ -122,7 +140,7 @@ func runBuild(workingDirectory string) error {
 	}
 
 	success("Building %s", ctx.project.name+ideProjectExtension)
-	if _, err := ctx.project.Build(); err != nil {
+	if _, err := ctx.project.Build(*exporter); err != nil {
 		return err
 	}
 

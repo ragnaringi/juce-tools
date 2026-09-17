@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 type ProjucerProject struct {
@@ -35,7 +36,18 @@ func NewProject(directory string) (*ProjucerProject, error) {
 	}, nil
 }
 
-func findExportedProjectFile(buildsPath string, projectName string) (string, error) {
+func findExportedProjectFile(buildsPath string, projectName string, exporter string) (string, error) {
+	if exporter != "" {
+		projectFile := filepath.Join(buildsPath, exporter, projectName+ideProjectExtension)
+		if found, err := fileExists(projectFile); err != nil {
+			return "", fmt.Errorf("checking exported project file: %w", err)
+		} else if found {
+			return projectFile, nil
+		}
+
+		return "", fmt.Errorf("unable to find exported project file for exporter %q: %s", exporter, projectFile)
+	}
+
 	candidates, err := exportedProjectCandidates(buildsPath, projectName)
 	if err != nil {
 		return "", err
@@ -52,12 +64,12 @@ func findExportedProjectFile(buildsPath string, projectName string) (string, err
 	return "", fmt.Errorf("unable to find exported project file for %q in %s", projectName, buildsPath)
 }
 
-func (p *ProjucerProject) resolveBuildFilePath() error {
+func (p *ProjucerProject) resolveBuildFilePath(exporter string) error {
 	if p.buildFilePath != "" {
 		return nil
 	}
 
-	buildFilePath, err := findExportedProjectFile(p.buildsPath, p.name)
+	buildFilePath, err := findExportedProjectFile(p.buildsPath, p.name, exporter)
 	if err != nil {
 		return err
 	}
@@ -66,8 +78,8 @@ func (p *ProjucerProject) resolveBuildFilePath() error {
 	return nil
 }
 
-func (p *ProjucerProject) Open() (bool, error) {
-	if err := p.resolveBuildFilePath(); err != nil {
+func (p *ProjucerProject) Open(exporter string) (bool, error) {
+	if err := p.resolveBuildFilePath(exporter); err != nil {
 		return false, err
 	}
 
@@ -77,8 +89,8 @@ func (p *ProjucerProject) Open() (bool, error) {
 	return false, errors.New("unable to find build project file")
 }
 
-func (p *ProjucerProject) Build() (bool, error) {
-	if err := p.resolveBuildFilePath(); err != nil {
+func (p *ProjucerProject) Build(exporter string) (bool, error) {
+	if err := p.resolveBuildFilePath(exporter); err != nil {
 		return false, err
 	}
 

@@ -24,7 +24,7 @@ func NewJUCEInstallation(rootDirectory string) (*JUCEInstallation, error) {
 	}
 
 	projucerBuildsPath := filepath.Join(jucePath, "extras", "Projucer", "Builds")
-	projucerProjectFile, err := findExportedProjectFile(projucerBuildsPath, "Projucer")
+	projucerProjectFile, err := findExportedProjectFile(projucerBuildsPath, "Projucer", "")
 	if err != nil {
 		return nil, fmt.Errorf("finding Projucer project: %w", err)
 	}
