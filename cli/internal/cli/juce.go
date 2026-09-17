@@ -23,8 +23,12 @@ func NewJUCEInstallation(rootDirectory string) (*JUCEInstallation, error) {
 		return nil, fmt.Errorf("no JUCE installation found in directory")
 	}
 
-	// Construct Projucer from its actual project file
-	projucerProjectFile := filepath.Join(jucePath, "extras", "Projucer", "Builds", platformIdentifier, "Projucer"+ideProjectExtension)
+	projucerBuildsPath := filepath.Join(jucePath, "extras", "Projucer", "Builds")
+	projucerProjectFile, err := findExportedProjectFile(projucerBuildsPath, "Projucer")
+	if err != nil {
+		return nil, fmt.Errorf("finding Projucer project: %w", err)
+	}
+
 	projucer := NewProjucer(projucerProjectFile)
 
 	return &JUCEInstallation{

@@ -2,13 +2,19 @@ package cli
 
 import (
 	"io/fs"
+	"path/filepath"
 
 	"github.com/nexidian/gocliselect"
 )
 
-const platformIdentifier string = "MacOSX"
 const ideProjectExtension string = ".xcodeproj"
 const buildArtefactsPath string = "build"
+
+func exportedProjectCandidates(buildsPath string, projectName string) ([]string, error) {
+	return []string{
+		filepath.Join(buildsPath, "MacOSX", projectName+ideProjectExtension),
+	}, nil
+}
 
 func findJucerProjectFile(directory string) fs.FileInfo {
 	projectFiles := findFilesWithExtension(directory, ".jucer")

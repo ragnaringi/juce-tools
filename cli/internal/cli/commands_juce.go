@@ -52,19 +52,25 @@ func runUp(workingDirectory string) error {
 }
 
 func runClean(workingDirectory string, args []string) error {
-	ctx, err := loadJUCECommandContext(workingDirectory)
+	project, err := NewProject(workingDirectory)
 	if err != nil {
 		return err
 	}
 
-	success("Cleaning %s", ctx.project.name)
+	success("Cleaning %s", project.name)
+
 	if len(args) > 0 && args[0] == "--all" {
-		if _, err := ctx.projucer.Clean(); err != nil {
+		juce, err := NewJUCEInstallation(workingDirectory)
+		if err != nil {
+			return err
+		}
+
+		if _, err := juce.projucer.Clean(); err != nil {
 			return err
 		}
 	}
 
-	if _, err := ctx.project.Clean(); err != nil {
+	if _, err := project.Clean(); err != nil {
 		return err
 	}
 
