@@ -4,7 +4,42 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
+	"strings"
 )
+
+func canOpenExporter(exporter string) bool {
+	if exporter == "" {
+		return true
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		return exporter == "MacOSX" || exporter == "iOS"
+	case "windows":
+		return strings.HasPrefix(exporter, "VisualStudio")
+	default:
+		return false
+	}
+}
+
+func canBuildExporter(exporter string) bool {
+	if exporter == "" {
+		return true
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		return exporter == "MacOSX" || exporter == "iOS"
+	case "windows":
+		return strings.HasPrefix(exporter, "VisualStudio")
+	default:
+		return false
+	}
+}
+
+func unsupportedExporterError(command string, exporter string) error {
+	return fmt.Errorf("cannot %s exporter %q on %s", command, exporter, runtime.GOOS)
+}
 
 func build(projectFile string, targetName string) (bool, error) {
 	var cmd *exec.Cmd

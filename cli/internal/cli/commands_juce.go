@@ -119,6 +119,10 @@ func runCode(workingDirectory string, args []string) error {
 		return err
 	}
 
+	if !canOpenExporter(*exporter) {
+		return unsupportedExporterError("open", *exporter)
+	}
+
 	ctx, err := loadJUCECommandContext(workingDirectory)
 	if err != nil {
 		return err
@@ -143,10 +147,14 @@ func runCode(workingDirectory string, args []string) error {
 }
 
 func runBuild(workingDirectory string, args []string) error {
-	codeFlags := flag.NewFlagSet("code", flag.ContinueOnError)
-	exporter := codeFlags.String("exporter", "", "Projucer exporter to use")
-	if err := codeFlags.Parse(args); err != nil {
+	buildFlags := flag.NewFlagSet("build", flag.ContinueOnError)
+	exporter := buildFlags.String("exporter", "", "Projucer exporter to use")
+	if err := buildFlags.Parse(args); err != nil {
 		return err
+	}
+
+	if !canBuildExporter(*exporter) {
+		return unsupportedExporterError("build", *exporter)
 	}
 
 	ctx, err := loadJUCECommandContext(workingDirectory)
