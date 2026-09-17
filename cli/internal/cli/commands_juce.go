@@ -149,6 +149,7 @@ func runCode(workingDirectory string, args []string) error {
 func runBuild(workingDirectory string, args []string) error {
 	buildFlags := flag.NewFlagSet("build", flag.ContinueOnError)
 	exporter := buildFlags.String("exporter", "", "Projucer exporter to use")
+	scheme := buildFlags.String("scheme", "", "scheme to build")
 	if err := buildFlags.Parse(args); err != nil {
 		return err
 	}
@@ -167,8 +168,13 @@ func runBuild(workingDirectory string, args []string) error {
 		return err
 	}
 
-	success("Building %s", ctx.project.name+ideProjectExtension)
-	if _, err := ctx.project.Build(*exporter); err != nil {
+	if *scheme != "" {
+		success("Building %s with scheme %s", ctx.project.name+ideProjectExtension, *scheme)
+	} else {
+		success("Building %s", ctx.project.name+ideProjectExtension)
+	}
+
+	if _, err := ctx.project.Build(*exporter, *scheme); err != nil {
 		return err
 	}
 

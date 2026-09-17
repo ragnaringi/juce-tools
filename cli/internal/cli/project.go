@@ -138,13 +138,17 @@ func (p *ProjucerProject) Open(exporter string) (bool, error) {
 	return false, errors.New("unable to find build project file")
 }
 
-func (p *ProjucerProject) Build(exporter string) (bool, error) {
+func (p *ProjucerProject) Build(exporter string, scheme string) (bool, error) {
 	if err := p.resolveBuildFilePath(exporter); err != nil {
 		return false, err
 	}
 
+	if scheme == "" {
+		scheme = p.name + " - " + p.schemeName
+	}
+
 	if found, _ := fileExists(p.buildFilePath); found {
-		return build(p.buildFilePath, p.name+" - "+p.schemeName)
+		return build(p.buildFilePath, scheme)
 	}
 	return false, errors.New("unable to find build project file")
 }

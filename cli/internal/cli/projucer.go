@@ -54,7 +54,7 @@ func (p *Projucer) Build() (bool, error) {
 	warn("Projucer binary not found or outdated → rebuilding...")
 
 	notice("Building Projucer from: %s", relativePath(p.rootDir, p.project.buildFilePath))
-	return p.project.Build("")
+	return p.project.Build("", "")
 }
 
 // Open builds Projucer if necessary, then launches the binary with a project file.
