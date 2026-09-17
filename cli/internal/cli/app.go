@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var verbose bool
+
 func formatCommand(cmd *exec.Cmd) string {
 	var parts []string
 
@@ -37,6 +39,17 @@ func shellQuote(value string) string {
 func run(cmd *exec.Cmd) (bool, error) {
 	notice("$ %s", formatCommand(cmd))
 
+	if verbose {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + string(output))
@@ -47,6 +60,7 @@ func run(cmd *exec.Cmd) (bool, error) {
 
 func Run(args []string) int {
 	flags := flag.NewFlagSet("juce-tools", flag.ExitOnError)
+	flags.BoolVar(&verbose, "verbose", false, "stream command output")
 	flags.Parse(args)
 
 	if flags.NArg() == 0 {
