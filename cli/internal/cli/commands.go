@@ -22,21 +22,31 @@ func runCommand(workingDirectory string, args []string) error {
 	}
 }
 
-func loadContext(workingDirectory string) (*JUCEProject, *JUCE) {
-	project := NewProject(workingDirectory)
-	success("Found %s", filepath.Base(project.jucerFilePath))
-
-	juce := NewJUCE(workingDirectory)
-
-	if ok, err := juce.projucer.Build(); !ok {
-		fail("Failed to build Projucer: %v", err)
+func loadContext(workingDirectory string) (*JUCEProject, *JUCE, error) {
+	project, err := NewProject(workingDirectory)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return project, juce
+	success("Found %s", filepath.Base(project.jucerFilePath))
+
+	juce, err := NewJUCE(workingDirectory)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if ok, err := juce.projucer.Build(); !ok {
+		return nil, nil, fmt.Errorf("failed to build Projucer: %w", err)
+	}
+
+	return project, juce, nil
 }
 
 func runUp(workingDirectory string) error {
-	project, juce := loadContext(workingDirectory)
+	project, juce, err := loadContext(workingDirectory)
+	if err != nil {
+		return err
+	}
 
 	success("Opening %s", project.name)
 	if _, err := juce.projucer.Open(project.jucerFilePath); err != nil {
@@ -47,7 +57,10 @@ func runUp(workingDirectory string) error {
 }
 
 func runClean(workingDirectory string, args []string) error {
-	project, juce := loadContext(workingDirectory)
+	project, juce, err := loadContext(workingDirectory)
+	if err != nil {
+		return err
+	}
 
 	if len(args) > 0 && args[0] == "--all" {
 		if _, err := juce.projucer.Clean(); err != nil {
@@ -63,7 +76,10 @@ func runClean(workingDirectory string, args []string) error {
 }
 
 func runExport(workingDirectory string) error {
-	project, juce := loadContext(workingDirectory)
+	project, juce, err := loadContext(workingDirectory)
+	if err != nil {
+		return err
+	}
 
 	success("Exporting %s", project.name)
 	if _, err := juce.projucer.Export(project.jucerFilePath); err != nil {
@@ -74,7 +90,10 @@ func runExport(workingDirectory string) error {
 }
 
 func runCode(workingDirectory string) error {
-	project, juce := loadContext(workingDirectory)
+	project, juce, err := loadContext(workingDirectory)
+	if err != nil {
+		return err
+	}
 
 	success("Exporting %s", project.name)
 	if _, err := juce.projucer.Export(project.jucerFilePath); err != nil {
@@ -90,7 +109,10 @@ func runCode(workingDirectory string) error {
 }
 
 func runBuild(workingDirectory string) error {
-	project, juce := loadContext(workingDirectory)
+	project, juce, err := loadContext(workingDirectory)
+	if err != nil {
+		return err
+	}
 
 	success("Exporting %s", project.name)
 	if _, err := juce.projucer.Export(project.jucerFilePath); err != nil {

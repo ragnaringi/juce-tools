@@ -16,10 +16,10 @@ type JUCEProject struct {
 	schemeName    string // the project scheme name
 }
 
-func NewProject(directory string) *JUCEProject {
+func NewProject(directory string) (*JUCEProject, error) {
 	projectFile := findJucerProjectFile(directory)
 	if projectFile == nil {
-		panic("No JUCE projects found in directory")
+		return nil, errors.New("no JUCE projects found in directory")
 	}
 	name := fileNameWithoutExtension(projectFile.Name())
 	buildsPath := path.Join(directory, "Builds")
@@ -32,7 +32,7 @@ func NewProject(directory string) *JUCEProject {
 		buildFilePath,
 		name,
 		"All",
-	}
+	}, nil
 }
 
 func (p *JUCEProject) Open() (bool, error) {

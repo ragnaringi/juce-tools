@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -10,10 +11,16 @@ type JUCE struct {
 	projucer *Projucer
 }
 
-func NewJUCE(rootDirectory string) *JUCE {
-	jucePath := findJuceDirectory(rootDirectory)
-	if exists, _ := fileExists(jucePath); !exists {
-		panic("No JUCE installation found in directory")
+func NewJUCE(rootDirectory string) (*JUCE, error) {
+	jucePath, err := findJuceDirectory(rootDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists, err := fileExists(jucePath); err != nil {
+		return nil, fmt.Errorf("checking JUCE path: %w", err)
+	} else if !exists {
+		return nil, fmt.Errorf("no JUCE installation found in directory")
 	}
 
 	// Construct Projucer from its actual project file
@@ -23,7 +30,7 @@ func NewJUCE(rootDirectory string) *JUCE {
 	return &JUCE{
 		path:     jucePath,
 		projucer: projucer,
-	}
+	}, nil
 }
 
 // findJuceDirectory attempts to locate a JUCE installation.
@@ -31,13 +38,13 @@ func NewJUCE(rootDirectory string) *JUCE {
 // downward scan from startDir
 // upward search
 // JUCE_PATH environment variable
-func findJuceDirectory(startDir string) string {
+func findJuceDirectory(startDir string) (string, error) {
 	// Downward recursive scan (max depth)
 	maxDepth := 5
 	found := scanDownwards(startDir, 0, maxDepth)
 	if found != "" {
 		success("Found JUCE by scanning downward: %s", relativePath(startDir, found))
-		return found
+		return found, nil
 	}
 
 	// Walk upwards
@@ -45,7 +52,7 @@ func findJuceDirectory(startDir string) string {
 	for {
 		if isJuceDir(dir) {
 			success("Found JUCE by walking upwards: %s", relativePath(startDir, dir))
-			return dir
+			return dir, nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -58,12 +65,12 @@ func findJuceDirectory(startDir string) string {
 	if envPath := os.Getenv("JUCE_PATH"); envPath != "" {
 		if isJuceDir(envPath) {
 			success("Found JUCE via JUCE_PATH: %s", envPath)
-			return envPath
+			return envPath, nil
 		}
 		warn("JUCE_PATH is set but not valid: %s", envPath)
 	}
 
-	panic("No JUCE installation found.")
+	return "", fmt.Errorf("no JUCE installation found")
 }
 
 // scanDownwards recursively searches subdirectories up to maxDepth
