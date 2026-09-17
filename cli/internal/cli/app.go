@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -14,7 +15,11 @@ func formatCommand(cmd *exec.Cmd) string {
 	var parts []string
 
 	if cmd.Dir != "" {
-		parts = append(parts, "cd", shellQuote(cmd.Dir), "&&")
+		if runtime.GOOS == "windows" {
+			parts = append(parts, "cd", shellQuote(cmd.Dir), "&&")
+		} else {
+			parts = append(parts, "cd", shellQuote(cmd.Dir), "&&")
+		}
 	}
 
 	for _, arg := range cmd.Args {
@@ -25,6 +30,14 @@ func formatCommand(cmd *exec.Cmd) string {
 }
 
 func shellQuote(value string) string {
+	if runtime.GOOS == "windows" {
+		return windowsShellQuote(value)
+	}
+
+	return posixShellQuote(value)
+}
+
+func posixShellQuote(value string) string {
 	if value == "" {
 		return `""`
 	}
@@ -36,8 +49,20 @@ func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
 }
 
+func windowsShellQuote(value string) string {
+	if value == "" {
+		return `""`
+	}
+
+	if !strings.ContainsAny(value, " \t\n\"&|<>^") {
+		return value
+	}
+
+	return `"` + strings.ReplaceAll(value, `"`, `\"`) + `"`
+}
+
 func run(cmd *exec.Cmd) (bool, error) {
-	notice("$ %s", formatCommand(cmd))
+	command("%s", formatCommand(cmd))
 
 	if verbose {
 		cmd.Stdout = os.Stdout
