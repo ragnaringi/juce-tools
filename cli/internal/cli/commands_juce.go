@@ -53,12 +53,12 @@ func runUp(workingDirectory string) error {
 }
 
 func runClean(workingDirectory string, args []string) error {
-	project, err := NewProject(workingDirectory)
-	if err != nil {
+	success("Cleaning Builds")
+
+	buildsPath := filepath.Join(workingDirectory, "Builds")
+	if err := cleanDirectoryContents(buildsPath); err != nil {
 		return err
 	}
-
-	success("Cleaning %s", project.name)
 
 	if len(args) > 0 && args[0] == "--all" {
 		juce, err := NewJUCEInstallation(workingDirectory)
@@ -69,10 +69,6 @@ func runClean(workingDirectory string, args []string) error {
 		if _, err := juce.projucer.Clean(); err != nil {
 			return err
 		}
-	}
-
-	if _, err := project.Clean(); err != nil {
-		return err
 	}
 
 	return nil

@@ -57,3 +57,21 @@ func findFilesWithExtension(directory, ext string) (ret []fs.FileInfo) {
 	}
 	return
 }
+
+func cleanDirectoryContents(directory string) error {
+	entries, err := os.ReadDir(directory)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if err := os.RemoveAll(filepath.Join(directory, entry.Name())); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
