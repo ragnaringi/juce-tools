@@ -11,9 +11,9 @@ import (
 
 // Projucer wraps a JUCEProject and handles building the Projucer IDE binary.
 type Projucer struct {
-	project    *JUCEProject // internal JUCEProject for paths
-	binaryPath string       // path to Projucer binary
-	rootDir    string       // current working directory
+	project    *ProjucerProject // internal JUCEProject for paths
+	binaryPath string           // path to Projucer binary
+	rootDir    string           // current working directory
 }
 
 // NewProjucer creates a new Projucer instance for a given Projucer project path.
@@ -22,7 +22,7 @@ func NewProjucer(projectFile string) *Projucer {
 	binaryPath := initBinaryPath(buildsPath)
 	rootDir, _ := os.Getwd()
 
-	baseProject := &JUCEProject{
+	baseProject := &ProjucerProject{
 		directory:     filepath.Dir(filepath.Dir(buildsPath)),
 		buildsPath:    buildsPath,
 		jucerFilePath: projectFile,

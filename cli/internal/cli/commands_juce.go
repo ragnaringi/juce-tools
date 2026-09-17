@@ -7,7 +7,7 @@ import (
 
 type JUCECommandContext struct {
 	workingDirectory string
-	project          *JUCEProject
+	project          *ProjucerProject
 	juce             *JUCE
 	projucer         *Projucer
 }
