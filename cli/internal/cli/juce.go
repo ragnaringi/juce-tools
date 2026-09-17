@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 )
 
-type JUCE struct {
+type JUCEInstallation struct {
 	path     string
 	projucer *Projucer
 }
 
-func NewJUCE(rootDirectory string) (*JUCE, error) {
+func NewJUCEInstallation(rootDirectory string) (*JUCEInstallation, error) {
 	jucePath, err := findJuceDirectory(rootDirectory)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func NewJUCE(rootDirectory string) (*JUCE, error) {
 	projucerProjectFile := filepath.Join(jucePath, "extras", "Projucer", "Builds", platformIdentifier, "Projucer"+ideProjectExtension)
 	projucer := NewProjucer(projucerProjectFile)
 
-	return &JUCE{
+	return &JUCEInstallation{
 		path:     jucePath,
 		projucer: projucer,
 	}, nil

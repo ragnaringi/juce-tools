@@ -8,7 +8,7 @@ import (
 type JUCECommandContext struct {
 	workingDirectory string
 	project          *ProjucerProject
-	juce             *JUCE
+	juce             *JUCEInstallation
 	projucer         *Projucer
 }
 
@@ -20,7 +20,7 @@ func loadJUCECommandContext(workingDirectory string) (*JUCECommandContext, error
 
 	success("Found %s", filepath.Base(project.jucerFilePath))
 
-	juce, err := NewJUCE(workingDirectory)
+	juce, err := NewJUCEInstallation(workingDirectory)
 	if err != nil {
 		return nil, err
 	}
