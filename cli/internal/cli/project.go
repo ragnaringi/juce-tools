@@ -1,12 +1,27 @@
 package cli
 
 import (
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
+
+type jucerProjectFile struct {
+	ExportFormats jucerExportFormats `xml:"EXPORTFORMATS"`
+}
+
+type jucerExportFormats struct {
+	Exporters []jucerExporter `xml:",any"`
+}
+
+type jucerExporter struct {
+	XMLName      xml.Name
+	TargetFolder string `xml:"targetFolder,attr"`
+}
 
 type ProjucerProject struct {
 	directory     string // project root directory
@@ -36,9 +51,20 @@ func NewProject(directory string) (*ProjucerProject, error) {
 	}, nil
 }
 
+func exportedProjectFileName(projectName string, exporter string) string {
+	switch {
+	case strings.HasPrefix(exporter, "VisualStudio"):
+		return projectName + ".sln"
+	case exporter == "MacOSX", exporter == "iOS":
+		return projectName + ".xcodeproj"
+	default:
+		return projectName + ideProjectExtension
+	}
+}
+
 func findExportedProjectFile(buildsPath string, projectName string, exporter string) (string, error) {
 	if exporter != "" {
-		projectFile := filepath.Join(buildsPath, exporter, projectName+ideProjectExtension)
+		projectFile := filepath.Join(buildsPath, exporter, exportedProjectFileName(projectName, exporter))
 		if found, err := fileExists(projectFile); err != nil {
 			return "", fmt.Errorf("checking exported project file: %w", err)
 		} else if found {
@@ -62,6 +88,29 @@ func findExportedProjectFile(buildsPath string, projectName string, exporter str
 	}
 
 	return "", fmt.Errorf("unable to find exported project file for %q in %s", projectName, buildsPath)
+}
+
+func (p *ProjucerProject) AvailableExporters() ([]string, error) {
+	data, err := os.ReadFile(p.jucerFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("reading .jucer file: %w", err)
+	}
+
+	var projectFile jucerProjectFile
+	if err := xml.Unmarshal(data, &projectFile); err != nil {
+		return nil, fmt.Errorf("parsing .jucer file: %w", err)
+	}
+
+	var exporters []string
+	for _, exporter := range projectFile.ExportFormats.Exporters {
+		if exporter.TargetFolder == "" {
+			continue
+		}
+
+		exporters = append(exporters, filepath.Base(exporter.TargetFolder))
+	}
+
+	return exporters, nil
 }
 
 func (p *ProjucerProject) resolveBuildFilePath(exporter string) error {

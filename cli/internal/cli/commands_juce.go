@@ -88,6 +88,30 @@ func runExport(workingDirectory string) error {
 	return nil
 }
 
+func runExporters(workingDirectory string) error {
+	project, err := NewProject(workingDirectory)
+	if err != nil {
+		return err
+	}
+
+	exporters, err := project.AvailableExporters()
+	if err != nil {
+		return err
+	}
+
+	if len(exporters) == 0 {
+		warn("No exporters found for %s", project.name)
+		return nil
+	}
+
+	success("Available exporters for %s:", project.name)
+	for _, exporter := range exporters {
+		notice("  %s", exporter)
+	}
+
+	return nil
+}
+
 func runCode(workingDirectory string, args []string) error {
 	codeFlags := flag.NewFlagSet("code", flag.ContinueOnError)
 	exporter := codeFlags.String("exporter", "", "Projucer exporter to open")

@@ -14,6 +14,8 @@ func runCommand(workingDirectory string, args []string) error {
 		return runCode(workingDirectory, args[1:])
 	case "build":
 		return runBuild(workingDirectory, args[1:])
+	case "exporters":
+		return runExporters(workingDirectory)
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
