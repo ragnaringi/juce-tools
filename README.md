@@ -1,17 +1,84 @@
-A command line utility to simplify working with JUCE projects. Install then run from any directory that contains a JUCE installation and one or more .jucer projects.
+# juce-tools
 
-## Commands available
+A command line utility to simplify working with JUCE projects.
 
-`juce-tools up`  Opens up a .jucer project using the local Projucer  
-`juce-tools export`  Exports a .jucer project  
-`juce-tools code`  Exports a .jucer project and opens in the relevant IDE  
-`juce-tools build`  Compiles an exported .jucer project using the platform build tools  
+Run it from a JUCE project directory containing one or more .jucer files. The tool uses the local JUCE Projucer to open, export, and build projects.
 
-## Steps to install
+## Commands
 
-Clone the repo and build the go module directly with `go build -o juce-tools` or install the pre-built binaries using the provied shell scripts.
+### juce-tools up
 
-### Mac
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ragnaringi/juce-tools/main/scripts/install.sh)"`  
-### Win
-`Invoke-WebRequest -Uri https://raw.githubusercontent.com/ragnaringi/juce-tools/main/scripts/install.bat -OutFile .\temp.bat; .\temp.bat; rm .\temp.bat` Requires Administrator shell
+Opens a .jucer project using the local Projucer.
+
+### juce-tools export
+
+Exports the selected .jucer project using Projucer.
+
+### juce-tools exporters
+
+Lists exporters configured in the selected .jucer project.
+
+Example output:
+
+    Available exporters for MyProject:
+      MacOSX
+      iOS
+      VisualStudio2026
+
+### juce-tools code
+
+Exports the selected .jucer project and opens the default exported project for the current platform.
+
+To open a specific exporter:
+
+    juce-tools code --exporter iOS
+
+### juce-tools build
+
+Exports the selected .jucer project and builds the default exported project for the current platform.
+
+To build a specific exporter:
+
+    juce-tools build --exporter MacOSX
+
+To specify a build scheme:
+
+    juce-tools build --exporter MacOSX --scheme "MyProject - Standalone Plugin"
+
+### juce-tools clean
+
+Removes the contents of the local Builds directory.
+
+To also remove Projucer build artifacts:
+
+    juce-tools clean --all
+
+## Options
+
+### --verbose
+
+Streams command output directly to the terminal.
+
+Example:
+
+    juce-tools --verbose build --exporter MacOSX --scheme "MyProject - Standalone Plugin"
+
+Without --verbose, commands are printed before they run and output is shown only if a command fails.
+
+## Installation
+
+Clone the repo and build the Go module directly:
+
+    go build -o juce-tools
+
+Or install the pre-built binaries using the provided install scripts.
+
+### macOS
+
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ragnaringi/juce-tools/main/scripts/install.sh)"
+
+### Windows
+
+Run from an Administrator shell:
+
+    Invoke-WebRequest -Uri https://raw.githubusercontent.com/ragnaringi/juce-tools/main/scripts/install.bat -OutFile .\temp.bat; .\temp.bat; rm .\temp.bat
