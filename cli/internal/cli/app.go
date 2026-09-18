@@ -86,10 +86,11 @@ func run(cmd *exec.Cmd) (bool, error) {
 func Run(args []string) int {
 	flags := flag.NewFlagSet("juce-tools", flag.ExitOnError)
 	flags.BoolVar(&verbose, "verbose", false, "stream command output")
+	flags.Usage = printUsage
 	flags.Parse(args)
 
 	if flags.NArg() == 0 {
-		fmt.Println("No arguments found")
+		printUsage()
 		return 1
 	}
 
@@ -104,4 +105,33 @@ func Run(args []string) int {
 	}
 
 	return 0
+}
+
+func printUsage() {
+	fmt.Println(`Usage:
+  juce-tools [options] <command> [command options]
+
+Options:
+  --verbose    stream command output
+
+Commands:
+  up           open a .jucer project in Projucer
+  export       export a .jucer project
+  exporters    list exporters configured in the .jucer project
+  code         export and open the generated project
+  build        export and build the generated project
+  clean        remove generated build files
+
+Command options:
+  code --exporter <name>
+  build --exporter <name>
+  build --scheme <name>
+  clean --all
+
+Examples:
+  juce-tools up
+  juce-tools exporters
+  juce-tools code --exporter iOS
+  juce-tools build --exporter MacOSX --scheme "MyProject - Standalone Plugin"
+  juce-tools clean --all`)
 }
