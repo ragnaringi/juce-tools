@@ -21,10 +21,6 @@ jobs:
             os: macos-latest
             artifact-name: juce-tools-macos
 
-          - name: Linux amd64
-            os: ubuntu-latest
-            artifact-name: juce-tools-linux
-
           - name: Windows amd64
             os: windows-latest
             artifact-name: juce-tools-windows
@@ -60,14 +56,6 @@ jobs:
 
           rm "../juce-tools_${VERSION}_darwin_amd64"
           rm "../juce-tools_${VERSION}_darwin_arm64"
-
-      - name: Build Linux binary
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        working-directory: cli
-        run: |
-          VERSION="${GITHUB_REF_NAME}"
-          GOOS=linux GOARCH=amd64 go build -o "../juce-tools_${VERSION}_linux_amd64" .
 
       - name: Build Windows binary
         if: matrix.os == 'windows-latest'
