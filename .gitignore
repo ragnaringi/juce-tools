@@ -1,2 +1,4 @@
 *.exe
 .DS_Store
+cli/juce-tools
+cli/juce-tools.exe
