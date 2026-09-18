@@ -41,7 +41,7 @@ func unsupportedExporterError(command string, exporter string) error {
 	return fmt.Errorf("cannot %s exporter %q on %s", command, exporter, runtime.GOOS)
 }
 
-func build(projectFile string, targetName string) (bool, error) {
+func build(projectFile string, targetName string, exporter string) (bool, error) {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
@@ -49,7 +49,18 @@ func build(projectFile string, targetName string) (bool, error) {
 		cmd = exec.Command(buildTool, projectFile, "/property:Configuration=Release")
 	case "darwin":
 		const buildTool = "xcodebuild"
-		cmd = exec.Command(buildTool, "-project", projectFile, "-scheme", targetName, "-configuration", "Release", "-jobs", "8")
+		args := []string{
+			"-project", projectFile,
+			"-scheme", targetName,
+			"-configuration", "Release",
+			"-jobs", "8",
+		}
+
+		if exporter == "iOS" {
+			args = append(args, "-destination", "generic/platform=iOS")
+		}
+
+		cmd = exec.Command(buildTool, args...)
 	default:
 		return false, fmt.Errorf("platform not supported: %s", runtime.GOOS)
 	}

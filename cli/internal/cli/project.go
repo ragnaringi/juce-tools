@@ -148,7 +148,7 @@ func (p *ProjucerProject) Build(exporter string, scheme string) (bool, error) {
 	}
 
 	if found, _ := fileExists(p.buildFilePath); found {
-		return build(p.buildFilePath, scheme)
+		return build(p.buildFilePath, scheme, exporter)
 	}
 	return false, errors.New("unable to find build project file")
 }
